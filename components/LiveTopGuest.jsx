@@ -1,15 +1,17 @@
+// LiveTopGuest.jsx
+
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Modal } from 'react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from '@react-navigation/native';
 
-export default function LiveTop({ onCameraToggle }) {
+export default function LiveTopGuest() {
   const [modalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation();
 
   const handleConfirm = () => {
     setModalVisible(false);
-    navigation.navigate('main');
+    navigation.navigate('main'); // 메인 화면으로 이동
   };
 
   const handleCancel = () => {
@@ -20,12 +22,9 @@ export default function LiveTop({ onCameraToggle }) {
     <View style={styles.topBar}>
       <Image source={require('../assets/images/Liveimage.png')} style={styles.liveIcon} />
       <Text style={styles.liveText}>인원: </Text>
-
+      
       <View style={styles.topRightIcons}>
-        <TouchableOpacity onPress={onCameraToggle}>
-          <FontAwesome name="camera" size={24} color="gray" style={styles.icon} />
-        </TouchableOpacity>
-        <FontAwesome name="shield" size={24} color="gray" style={styles.icon} />
+        {/* 나가기 버튼만 표시 */}
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           <FontAwesome name="times" size={24} color="gray" style={styles.icon} />
         </TouchableOpacity>

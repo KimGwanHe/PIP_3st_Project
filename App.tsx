@@ -21,7 +21,7 @@ export default function App() {
         <Stack.Screen name="login" component={Login} />
         <Stack.Screen name="main" component={Main} options={{ headerShown: false }} />
         <Stack.Screen name="Live" component={Live} options={{ headerShown: false }} />
-        <Stack.Screen name="Live_" component={Live_}  options={{ headerShown: false }} />
+        <Stack.Screen name="Live_" component={Live_} options={{ headerShown: false }}/>
       </Stack.Navigator>
     </NavigationContainer>
   );

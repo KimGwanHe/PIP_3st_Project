@@ -1,17 +1,22 @@
-// import React, { useState, useEffect } from 'react';
-// import { View, Button, StyleSheet, Alert, PermissionsAndroid, Platform } from 'react-native';
-// import { RTCView, mediaDevices, RTCPeerConnection } from 'react-native-webrtc';
+// import React, { useState, useRef, useEffect } from 'react';
+// import { View, Button, StyleSheet } from 'react-native';
+// import { RNCamera } from 'react-native-camera';
+// import ViewShot from 'react-native-view-shot';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
-// import { useNavigation } from '@react-navigation/native';
+// import { Buffer } from 'buffer';
+// import LiveTop from '../components/LiveTop';
+// import MessageInput from '../components/Message';
 
-// export default function CameraShare() {
-//   const [stream, setStream] = useState(null);
-//   const [peerConnection, setPeerConnection] = useState(null);
-//   const [ws, setWs] = useState(null);
+// const CameraCaptureScreen = () => {
+//   const [isCapturing, setIsCapturing] = useState(false);
+//   const [cameraType, setCameraType] = useState(RNCamera.Constants.Type.back);
+//   const [socket, setSocket] = useState(null);
 //   const [clientId, setClientId] = useState(null);
 //   const [host, setHost] = useState(null);
-//   const [sharing, setSharing] = useState(false); // 카메라 공유 상태를 관리
-//   const navigation = useNavigation();
+//   const [messages, setMessages] = useState([]);
+//   const cameraRef = useRef(null);
+//   const viewShotRef = useRef(null);
+//   const captureInterval = useRef(null);
 
 //   useEffect(() => {
 //     const fetchClientIdAndHost = async () => {
@@ -34,173 +39,181 @@
 //   }, []);
 
 //   useEffect(() => {
-//     if (clientId && host) {
-//       const wsUrl = `ws://192.168.161.6:8000/ws/${host}/${clientId}`;
-//       const wsInstance = connectToWebSocket(wsUrl);
-//       if (wsInstance) {
-//         setWs(wsInstance);
-//         wsInstance.onmessage = (event) => {
-//           if (peerConnection) {
-//             handleSignaling(peerConnection, event.data);
+//     if (host && clientId) { // host와 clientId가 존재하는 경우에만 WebSocket 연결 시도
+//       const ws = new WebSocket(`ws://192.168.0.2:8000/ws/${host}/${clientId}`);
+      
+//       ws.onopen = () => {
+//         console.log('WebSocket connected');
+//       };
+
+//       ws.onmessage = (event) => {
+//         console.log('Received message:', event.data);
+//         try {
+//           const data = JSON.parse(event.data);
+//           if (data.type === 'text') {
+//             const formattedMessage = `${data.sender}: ${data.content}`;
+//             setMessages(prevMessages => [...prevMessages, formattedMessage]);
+//           } else if (data.type === 'image') {
+//             console.log('Received image data, not displaying in chat.');
 //           }
-//         };
-//       } else {
-//         console.error('Failed to initialize WebSocket');
-//       }
-//     }
-//   }, [clientId, host]);
-//   useEffect(() => {
-//     if (peerConnection && ws && sharing) {
-//       startSignaling(peerConnection, ws);
-//     }
-//   }, [peerConnection, ws, sharing]);
-//   const requestPermissions = async () => {
-//     if (Platform.OS === 'android') {
-//       try {
-//         const granted = await PermissionsAndroid.request(
-//           PermissionsAndroid.PERMISSIONS.CAMERA,
-//           {
-//             title: 'Camera Permission',
-//             message: 'This app needs access to your camera.',
-//             buttonNeutral: 'Ask Me Later',
-//             buttonNegative: 'Cancel',
-//             buttonPositive: 'OK',
-//           },
-//         );
-//         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-//           Alert.alert('Permission Denied', 'Camera permission is required for screen sharing.');
-//           return false;
+//         } catch (error) {
+//           console.error("Failed to parse WebSocket message", error);
 //         }
-//       } catch (err) {
-//         console.warn(err);
-//         return false;
-//       }
+//       };
+      
+//       ws.onclose = () => {
+//         console.log('WebSocket disconnected');
+//         stopCapturing(); // 소켓이 닫힐 때 캡처 작업도 중지
+//       };
+      
+//       ws.onerror = (error) => {
+//         console.log('WebSocket error:', error);
+//       };
+      
+//       setSocket(ws);
+  
+//       return () => {
+//         ws.close();
+//         clearInterval(captureInterval.current); // 컴포넌트 언마운트 시 캡처 정리
+//       };
 //     }
-//     return true;
-//   };
-//   const startCameraShare = async () => {
+//   }, [host, clientId]);
+
+//   async function sendImageToServer(imageBase64) {
 //     try {
-//       const hasPermission = await requestPermissions();
-//       if (!hasPermission) return;
-//       const cameraStream = await mediaDevices.getUserMedia({
-//         video: true,  // 카메라 비디오 스트림 요청
-//         audio: false, // 오디오 비활성화
-//       });
-//       if (stream) {
-//         stream.getTracks().forEach((track) => track.stop());
+//       if (socket && socket.readyState === WebSocket.OPEN) {
+//         const messageObject = { type: "image", content: imageBase64, sender: clientId };
+//         socket.send(JSON.stringify(messageObject)); // WebSocket을 통해 이미지 데이터 전송
+//         console.log('Sent image message:', messageObject);
 //       }
-//       const connection = new RTCPeerConnection({
-//         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-//       });
-//       cameraStream.getTracks().forEach((track) => {
-//         connection.addTrack(track, cameraStream);
-//       });
-//       setStream(cameraStream);
-//       setPeerConnection(connection);
-//       setSharing(true);
 //     } catch (error) {
-//       console.error('Camera sharing error: ', error);
-//       Alert.alert('Error', 'Failed to start camera sharing.');
+//       console.error("Error sending image to server: ", error);
+//     }
+//   }
+
+//   const startCapturing = () => {
+//     setIsCapturing(true);
+//     captureInterval.current = setInterval(() => {
+//       viewShotRef.current.capture({ quality: 0.5, format: 'jpg' }).then((uri) => {
+//         fetch(uri)
+//           .then((res) => res.blob())
+//           .then((blob) => {
+//             const reader = new FileReader();
+//             reader.onloadend = () => {
+//               const base64data = reader.result.split(',')[1];
+//               sendImageToServer(base64data); // 서버로 이미지 데이터 전송
+//             };
+//             reader.readAsDataURL(blob);
+//           });
+//       });
+//     }, 100);  // 캡처 주기를 줄여 화질이 낮을 때 더 빠르게 전송 가능
+//   };
+
+//   const stopCapturing = () => {
+//     setIsCapturing(false);
+//     clearInterval(captureInterval.current);
+//   };
+
+//   // 카메라 전환 함수
+//   const toggleCameraType = () => {
+//     setCameraType((prevType) =>
+//       prevType === RNCamera.Constants.Type.back
+//         ? RNCamera.Constants.Type.front
+//         : RNCamera.Constants.Type.back
+//     );
+//   };
+
+//   // 메시지 전송 함수 정의
+//   const onSendMessage = (message) => {
+//     if (socket && socket.readyState === WebSocket.OPEN) {
+//       const messageObject = { type: "text", content: message, sender: clientId };
+//       socket.send(JSON.stringify(messageObject));
+//       console.log('Sent message:', messageObject);
 //     }
 //   };
-//   const handleStartButtonPress = () => {
-//     startCameraShare();
-//   };
-//   const handleStopButtonPress = () => {
-//     if (stream) {
-//       stream.getTracks().forEach((track) => track.stop());
-//       setStream(null);
-//     }
-//     if (peerConnection) {
-//       peerConnection.close();
-//       setPeerConnection(null);
-//     }
-//     setSharing(false);
-//   };
+
 //   return (
 //     <View style={styles.container}>
-//       <Button
-//         title={sharing ? 'Stop Sharing' : 'Start Sharing'}
-//         onPress={sharing ? handleStopButtonPress : handleStartButtonPress}
-//       />
-//       {stream && <RTCView streamURL={stream.toURL()} style={styles.stream} />}
+//       {/* LiveTop 컴포넌트 */}
+//       <LiveTop onCameraToggle={toggleCameraType} />
+      
+//       <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.3 }} style={styles.cameraContainer}>
+//         <RNCamera
+//           ref={cameraRef}
+//           style={styles.camera}
+//           type={cameraType}
+//           captureAudio={false}
+//         />
+//       </ViewShot>
+
+//       {!isCapturing && (
+//         <View style={styles.buttonContainer}>
+//           <Button title="방송 시작!" onPress={startCapturing} color="black" />
+//         </View>
+//       )}
+
+//       <MessageInput messages={messages} onSendMessage={onSendMessage} />
 //     </View>
 //   );
-// }
-// const startSignaling = (pc, ws) => {
-//   const createOffer = async () => {
-//     try {
-//       const offer = await pc.createOffer();
-//       await pc.setLocalDescription(offer);
-//       ws.send(JSON.stringify({ type: 'offer', sdp: offer.sdp }));
-//     } catch (error) {
-//       console.error('Failed to create offer:', error);
-//     }
-//   };
-//   pc.onicecandidate = (event) => {
-//     if (event.candidate) {
-//       ws.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
-//     }
-//   };
-//   ws.onmessage = async (event) => {
-//     try {
-//       const message = JSON.parse(event.data);
-//       if (message.type === 'answer') {
-//         await pc.setRemoteDescription({ type: 'answer', sdp: message.sdp });
-//       } else if (message.type === 'candidate') {
-//         const candidate = new RTCIceCandidate(message.candidate);
-//         await pc.addIceCandidate(candidate);
-//       }
-//     } catch (error) {
-//       console.error('Error handling signaling message:', error);
-//     }
-//   };
-//   pc.onnegotiationneeded = createOffer;
 // };
-// const connectToWebSocket = (url) => {
-//   const ws = new WebSocket(url);
-//   ws.onopen = () => {
-//     console.log('WebSocket connection opened');
-//   };
-//   ws.onerror = (error) => {
-//     console.error('WebSocket error:', error.message);
-//   };
-//   ws.onclose = () => {
-//     console.log('WebSocket connection closed');
-//   };
-//   return ws;
-// };
+
 // const styles = StyleSheet.create({
 //   container: {
 //     flex: 1,
-//     backgroundColor: 'black',
-//     justifyContent: 'center',
-//     alignItems: 'center',
 //   },
-//   stream: {
-//     width: '100%',
-//     height: '100%',
+//   cameraContainer: {
+//     flex: 1,
+//   },
+//   camera: {
+//     flex: 1,
+//   },
+//   buttonContainer: {
+//     position: 'absolute',
+//     top: '30%',
+//     left: '42%',
+//     zIndex: 1000,
+//     backgroundColor: 'yellow',
 //   },
 // });
 
-// Host.jsx
-import React, { useState, useEffect } from 'react';
-import { View, Button, StyleSheet, Alert, PermissionsAndroid, Platform } from 'react-native';
-import { RTCView, mediaDevices, RTCPeerConnection, RTCIceCandidate, RTCSessionDescription } from 'react-native-webrtc';
+// export default CameraCaptureScreen;
+// ======================================================
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Button, StyleSheet } from 'react-native';
+import { RNCamera } from 'react-native-camera';
+import ViewShot from 'react-native-view-shot';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Buffer } from 'buffer';
+import LiveTop from '../components/LiveTop';
+import MessageInput from '../components/Message';
+import * as tf from '@tensorflow/tfjs';
+import '@tensorflow/tfjs-react-native';
+import { bundleResourceIO } from '@tensorflow/tfjs-react-native';
+import { decodeJpeg, imageToTensor, drawBoundingBoxes } from 'react-native-tflite';
+import ImageResizer from 'react-native-image-resizer';
+import RNFS from 'react-native-fs';
 
-export default function Host() {
-  const [stream, setStream] = useState(null);
-  const [peerConnection, setPeerConnection] = useState(null);
-  const [ws, setWs] = useState(null);
+const CameraCaptureScreen = () => {
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [cameraType, setCameraType] = useState(RNCamera.Constants.Type.back);
+  const [socket, setSocket] = useState(null);
   const [clientId, setClientId] = useState(null);
   const [host, setHost] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const cameraRef = useRef(null);
+  const viewShotRef = useRef(null);
+  const captureInterval = useRef(null);
+  const modelRef = useRef(null);
+  const faceModelRef = useRef(null);
+  const carModelRef = useRef(null);
 
   useEffect(() => {
     const fetchClientIdAndHost = async () => {
       try {
         const clientId = await AsyncStorage.getItem('nickname');
         const host = await AsyncStorage.getItem('host');
+        console.log('ClientId:', clientId);
+        console.log('Host:', host);
         if (clientId && host) {
           setClientId(clientId);
           setHost(host);
@@ -211,166 +224,191 @@ export default function Host() {
         console.error('Failed to retrieve clientId or host from AsyncStorage', error);
       }
     };
+    const loadModels = async () => {
+      await tf.ready();
+      const faceModel = require('../assets/car_detection.tflite');
+      const carModel = require('../assets/face_detection.tflite');
+
+      faceModelRef.current = await tf.loadGraphModel(bundleResourceIO(faceModel));
+      carModelRef.current = await tf.loadGraphModel(bundleResourceIO(carModel));
+    };
+
     fetchClientIdAndHost();
+    loadModels(); // 모델 로드
   }, []);
 
   useEffect(() => {
-    if (clientId && host && !ws) {
-      const wsUrl = `ws://192.168.161.6:8000/ws/${host}/${clientId}`;
-      const wsInstance = new WebSocket(wsUrl);
-
-      wsInstance.onopen = () => {
-        console.log('WebSocket connection opened');
-        setWs(wsInstance);
+    if (host && clientId) { // host와 clientId가 존재하는 경우에만 WebSocket 연결 시도
+      const ws = new WebSocket(`ws://192.168.0.23:8000/ws/${host}/${clientId}`);
+      
+      ws.onopen = () => {
+        console.log('WebSocket connected');
       };
 
-      wsInstance.onerror = (error) => {
-        console.error('WebSocket error:', error.message);
-      };
-
-      wsInstance.onclose = () => {
-        console.log('WebSocket connection closed');
-      };
-
-      wsInstance.onmessage = async (event) => {
-        if (peerConnection) {
-          handleSignaling(peerConnection, event.data);
-        }
-      };
-
-      setWs(wsInstance);
-    }
-  }, [clientId, host, ws, peerConnection]);
-
-  const requestPermissions = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-          {
-            title: 'Camera Permission',
-            message: 'This app needs access to your camera.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Cancel',
-            buttonPositive: 'OK',
-          },
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert('Permission Denied', 'Camera permission is required for screen sharing.');
-          return false;
-        }
-      } catch (err) {
-        console.warn(err);
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const startCameraShare = async () => {
-    try {
-      const hasPermission = await requestPermissions();
-      if (!hasPermission) return;
-
-      const cameraStream = await mediaDevices.getUserMedia({
-        video: true,
-        audio: false,
-      });
-
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
-
-      const connection = new RTCPeerConnection({
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-      });
-
-      connection.onicecandidate = (event) => {
-        if (event.candidate) {
-          console.log('Sending ICE candidate:', event.candidate);
-          ws.send(JSON.stringify({ type: 'candidate', candidate: event.candidate }));
-        }
-      };
-
-      connection.onnegotiationneeded = async () => {
+      ws.onmessage = (event) => {
+        console.log('Received message:', event.data);
         try {
-          const offer = await connection.createOffer();
-          await connection.setLocalDescription(offer);
-          console.log('Offer created and set as local description:', offer);
-          ws.send(JSON.stringify({ type: 'offer', sdp: offer.sdp }));
+          const data = JSON.parse(event.data);
+          if (data.type === 'text') {
+            const formattedMessage = `${data.sender}: ${data.content}`;
+            setMessages(prevMessages => [...prevMessages, formattedMessage]);
+          } else if (data.type === 'image') {
+            console.log('Received image data, not displaying in chat.');
+          }
         } catch (error) {
-          console.error('Error during negotiationneeded event:', error);
+          console.error("Failed to parse WebSocket message", error);
         }
       };
-
-      cameraStream.getTracks().forEach((track) => {
-        connection.addTrack(track, cameraStream);
-      });
-
-      setStream(cameraStream);
-      setPeerConnection(connection);
-
-    } catch (error) {
-      console.error('Camera sharing error: ', error);
-      Alert.alert('Error', 'Failed to start camera sharing.');
+      
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        stopCapturing(); // 소켓이 닫힐 때 캡처 작업도 중지
+      };
+      
+      ws.onerror = (error) => {
+        console.log('WebSocket error:', error);
+      };
+      
+      setSocket(ws);
+  
+      return () => {
+        ws.close();
+        clearInterval(captureInterval.current); // 컴포넌트 언마운트 시 캡처 정리
+      };
     }
-  };
+  }, [host, clientId]);
 
-  const handleStartButtonPress = () => {
-    startCameraShare();
-  };
-
-  const handleStopButtonPress = () => {
-    if (stream) {
-      stream.getTracks().forEach((track) => track.stop());
-      setStream(null);
-    }
-    if (peerConnection) {
-      peerConnection.close();
-      setPeerConnection(null);
-    }
-  };
-
-  const handleSignaling = (pc, data) => {
+  async function sendImageToServer(imageBase64) {
     try {
-      const message = JSON.parse(data);
-      if (message.type === 'answer') {
-        console.log('Received answer:', message);
-        pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: message.sdp }));
-      } else if (message.type === 'candidate') {
-        console.log('Received ICE candidate:', message.candidate);
-        const candidate = new RTCIceCandidate(message.candidate);
-        pc.addIceCandidate(candidate).catch(error => console.error('Error adding ICE candidate:', error));
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        const messageObject = { type: "image", content: imageBase64, sender: clientId };
+        socket.send(JSON.stringify(messageObject)); // WebSocket을 통해 이미지 데이터 전송
+        console.log('Sent image message:', messageObject);
       }
     } catch (error) {
-      console.error('Error handling signaling data:', error);
+      console.error("Error sending image to server: ", error);
+    }
+  }
+
+  const applyModelAndSendImage = async (imageUri) => {
+    if (!modelRef.current) return;
+  
+    // 1. 모델 적용하여 바운딩 박스 얻기
+    const faceBoxes = await detectObjects(imageUri, faceModelRef.current); // 얼굴 검출
+    const carBoxes = await detectObjects(imageUri, carModelRef.current); // 차량 검출
+  
+    // 2. 모자이크 처리
+    const mosaicImage = await applyMosaic(imageUri, faceBoxes, carBoxes);
+  
+    if (mosaicImage) {
+      // 3. 소켓으로 이미지 전송
+      sendImageToServer(mosaicImage);
+    }
+  };
+
+  const applyMosaic = async (imageUri, faceBoxes, carBoxes) => {
+    try {
+      // 1. 이미지 축소
+      const scale = 10; // 모자이크 크기 설정 (숫자가 클수록 더 큰 모자이크 효과)
+      const resizedImage = await ImageResizer.createResizedImage(imageUri, 100, 100, 'JPEG', 100);
+      const resizedUri = resizedImage.uri;
+  
+      // 2. 축소된 이미지를 원본 크기로 다시 확대
+      const originalSizeImage = await ImageResizer.createResizedImage(resizedUri, resizedImage.width * scale, resizedImage.height * scale, 'JPEG', 100);
+      
+      // 3. 확대된 이미지 파일을 Base64로 변환
+      const base64Image = await RNFS.readFile(originalSizeImage.uri, 'base64');
+  
+      return base64Image;
+    } catch (error) {
+      console.error('Error applying mosaic:', error);
+      return null;
+    }
+  };
+
+  const startCapturing = () => {
+    setIsCapturing(true);
+    captureInterval.current = setInterval(() => {
+      viewShotRef.current.capture({ quality: 0.5, format: 'jpg' }).then((uri) => {
+        fetch(uri)
+          .then((res) => res.blob())
+          .then((blob) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const base64data = reader.result.split(',')[1];
+              sendImageToServer(base64data); // 서버로 이미지 데이터 전송
+            };
+            reader.readAsDataURL(blob);
+          });
+      });
+    }, 100);  // 캡처 주기를 줄여 화질이 낮을 때 더 빠르게 전송 가능
+  };
+
+  const stopCapturing = () => {
+    setIsCapturing(false);
+    clearInterval(captureInterval.current);
+  };
+
+  // 카메라 전환 함수
+  const toggleCameraType = () => {
+    setCameraType((prevType) =>
+      prevType === RNCamera.Constants.Type.back
+        ? RNCamera.Constants.Type.front
+        : RNCamera.Constants.Type.back
+    );
+  };
+
+  // 메시지 전송 함수 정의
+  const onSendMessage = (message) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      const messageObject = { type: "text", content: message, sender: clientId };
+      socket.send(JSON.stringify(messageObject));
+      console.log('Sent message:', messageObject);
     }
   };
 
   return (
     <View style={styles.container}>
-      <Button
-        title={stream ? 'Stop Sharing' : 'Start Sharing'}
-        onPress={stream ? handleStopButtonPress : handleStartButtonPress}
-      />
-      {stream && <RTCView streamURL={stream.toURL()} style={styles.stream} />}
+      {/* LiveTop 컴포넌트 */}
+      <LiveTop onCameraToggle={toggleCameraType} />
+      
+      <ViewShot ref={viewShotRef} options={{ format: 'jpg', quality: 0.3 }} style={styles.cameraContainer}>
+        <RNCamera
+          ref={cameraRef}
+          style={styles.camera}
+          type={cameraType}
+          captureAudio={false}
+        />
+      </ViewShot>
+
+      {!isCapturing && (
+        <View style={styles.buttonContainer}>
+          <Button title="방송 시작!" onPress={startCapturing} color="black" />
+        </View>
+      )}
+
+      <MessageInput messages={messages} onSendMessage={onSendMessage} />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  stream: {
-    width: '100%',
-    height: '100%',
+  cameraContainer: {
+    flex: 1,
+  },
+  camera: {
+    flex: 1,
+  },
+  buttonContainer: {
+    position: 'absolute',
+    top: '30%',
+    left: '42%',
+    zIndex: 1000,
+    backgroundColor: 'yellow',
   },
 });
 
-
-
-
+export default CameraCaptureScreen;

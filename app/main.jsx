@@ -26,10 +26,9 @@ const getClientId = async () => {
 getClientId();
 
 export default function Main() {
-  const navigation = useNavigation();
+  const navigation = useNavigation(); // useRouter 대신 useNavigation 사용
   const [connections, setConnections] = useState([]);
   const [nickname, setNickname] = useState('');
-  const [ws, setWs] = useState(null);
 
   useEffect(() => {
     // 닉네임을 AsyncStorage에서 가져옵니다.
@@ -48,7 +47,7 @@ export default function Main() {
 
   useEffect(() => {
     // 서버에서 현재 라이브 스트림 목록을 가져옵니다.
-    fetch('http://192.168.161.6:8000/connections')
+    fetch('http://192.168.0.23:8000/connections')
       .then(response => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -56,47 +55,28 @@ export default function Main() {
         return response.json();
       })
       .then(data => {
-        console.log('Fetched live streams:', data);
-        if (data && Object.keys(data).length > 0) {
+        console.log(data)
+        if (data) {
           setConnections(data);
         } else {
-          console.error('No live streams available:', data);
-          setConnections([]);
+          console.error('Invalid data format:', data);
         }
       })
       .catch(error => {
         console.error('Error fetching live streams:', error);
+        // setLiveStreams([]);
       });
   }, []);
 
-  // useEffect(() => {
-  //   // 서버에서 현재 라이브 스트림 목록을 가져옵니다.
-  //   fetch('http://192.168.161.6:8000/connections')
-  //     .then(response => {
-  //       if (!response.ok) {
-  //         throw new Error('Network response was not ok');
-  //       }
-  //       return response.json();
-  //     })
-  //     .then(data => {
-  //       console.log('Fetched live streams:', data)
-  //       if (data) {
-  //         setConnections(data);
-  //       } else {
-  //         console.error('Invalid data format:', data);
-  //       }
-  //     })
-  //     .catch(error => {
-  //       console.error('Error fetching live streams:', error);
-  //       // setLiveStreams([]);
-  //     });
-  // }, []);
-
   const handleAddPress1 = async (serverName) => {
     try {
+      // AsyncStorage에서 clientId 값을 가져옴
       const clientId = await AsyncStorage.getItem('nickname');
+  
+      // clientId를 포함하여 Live 화면으로 이동
+      // console.log('Live', { host: clientId });
       await AsyncStorage.setItem('host', serverName);
-      console.log(serverName,clientId,1)
+      console.log(serverName,clientId)
       navigation.navigate('Live_');
     } catch (error) {
       console.error('Failed to retrieve clientId from AsyncStorage', error);

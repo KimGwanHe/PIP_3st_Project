@@ -24,7 +24,7 @@ const Signup = () => {
         }
         try {
             console.log('Sending nickname for availability check:', nickname);
-            const response = await fetch('http://192.168.161.6:8000/user/check-nickname', {
+            const response = await fetch('http://192.168.0.23:8000/user/check-nickname', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -68,7 +68,7 @@ const Signup = () => {
         }
         setLoading(true);
         try {
-            const response = await fetch('http://192.168.161.6:8000/user/register', {
+            const response = await fetch('http://192.168.0.23:8000/user/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
