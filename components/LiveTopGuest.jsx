@@ -21,7 +21,6 @@ export default function LiveTopGuest() {
   return (
     <View style={styles.topBar}>
       <Image source={require('../assets/images/Liveimage.png')} style={styles.liveIcon} />
-      <Text style={styles.liveText}>인원: </Text>
       
       <View style={styles.topRightIcons}>
         {/* 나가기 버튼만 표시 */}
@@ -62,7 +61,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 15,
     position: 'absolute',
-    top: 50,
+    top: 20,
     left: 0,
     right: 0,
     zIndex: 1000,

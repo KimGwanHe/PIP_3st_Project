@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity, Modal } from 'react-na
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { useNavigation } from '@react-navigation/native';
 
-export default function LiveTop({ onCameraToggle }) {
+export default function LiveTop({ onCameraToggle, onToggleBlur }) {
   const [modalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation();
 
@@ -19,13 +19,14 @@ export default function LiveTop({ onCameraToggle }) {
   return (
     <View style={styles.topBar}>
       <Image source={require('../assets/images/Liveimage.png')} style={styles.liveIcon} />
-      <Text style={styles.liveText}>인원: </Text>
 
       <View style={styles.topRightIcons}>
         <TouchableOpacity onPress={onCameraToggle}>
           <FontAwesome name="camera" size={24} color="gray" style={styles.icon} />
         </TouchableOpacity>
-        <FontAwesome name="shield" size={24} color="gray" style={styles.icon} />
+        <TouchableOpacity onPress={onToggleBlur}>
+          <FontAwesome name="shield" size={24} color="gray" style={styles.icon} />
+        </TouchableOpacity>
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           <FontAwesome name="times" size={24} color="gray" style={styles.icon} />
         </TouchableOpacity>
@@ -63,15 +64,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 15,
     position: 'absolute',
-    top: 50,
+    top: 20,
     left: 0,
     right: 0,
     zIndex: 1000,
     opacity: 0.8,
   },
   liveIcon: {
-    width: 40,
-    height: 40,
+    width: 50,
+    height: 50,
     resizeMode: 'contain',
   },
   liveText: {
@@ -82,7 +83,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   icon: {
-    marginLeft: 15,
+    marginLeft: 25,
   },
   modalContainer: {
     flex: 1,

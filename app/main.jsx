@@ -47,7 +47,7 @@ export default function Main() {
 
   useEffect(() => {
     // 서버에서 현재 라이브 스트림 목록을 가져옵니다.
-    fetch('http://192.168.0.23:8000/connections')
+    fetch('http://172.30.1.98:8000/connections')
       .then(response => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
