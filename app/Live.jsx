@@ -121,7 +121,7 @@ const CameraCaptureScreen = () => {
       viewShotRef.current.capture({ quality: 0.1, format: 'jpg' }).then((uri) => {
         processAndSendImage(uri); // 이미지 처리 및 전송
       });
-    }, 175);
+    }, 175); // 0.175초
   };
 
   const stopCapturing = () => {

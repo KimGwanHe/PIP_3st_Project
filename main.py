@@ -27,37 +27,46 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 connections = defaultdict(list)
+
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, List[WebSocket]] = {}
+
     async def connect(self, websocket: WebSocket, room: str):
         await websocket.accept()
         if room not in self.active_connections:
             self.active_connections[room] = []
         self.active_connections[room].append(websocket)
+
     async def disconnect(self, websocket: WebSocket, room: str):
         if room in self.active_connections:
             self.active_connections[room].remove(websocket)
             if not self.active_connections[room]:
                 del self.active_connections[room]
+                
     async def broadcast(self, message: str, room: str):
         if room in self.active_connections:
             for connection in self.active_connections[room]:
                 await connection.send_text(message)
+
     async def close_room(self, room: str):
         """방을 닫고 모든 연결을 종료"""
         if room in self.active_connections:
             for connection in self.active_connections[room]:
                 await connection.close()
             del self.active_connections[room]
+
 manager = ConnectionManager()
+
 # 자기 닉네임이랑 클릭한 닉네임을 반환받아서 각각 전달 => 클릭한 닉네임의 이름의 서버에 입장 그리고 자신이 채팅치는 닉네임은 자기자신의 닉네임(세션스토리지에 담겨있는 닉네임)
 def decode_base64_to_image(base64_string):
     """Base64 문자열을 이미지로 디코딩"""
     image_data = base64.b64decode(base64_string)
     image = Image.open(io.BytesIO(image_data)).convert("RGB")
     return image
+
 def apply_mosaic(image, x, y, w, h, mosaic_scale=0.7):
     """이미지의 지정된 영역에 모자이크 처리를 적용하는 함수"""
     image_np = np.array(image)  # PIL 이미지를 NumPy 배열로 변환
@@ -65,6 +74,7 @@ def apply_mosaic(image, x, y, w, h, mosaic_scale=0.7):
     roi = cv2.blur(roi, (60, 60))  # 블러(모자이크) 처리
     image_np[y:y+h, x:x+w] = roi
     return Image.fromarray(image_np)  # NumPy 배열을 다시 PIL 이미지로 변환
+
 def detect_objects(image):
     """이미지에서 객체를 검출하고, 결과 이미지를 base64 형식으로 반환하는 함수"""
     results = model.predict(image)
@@ -86,6 +96,7 @@ def detect_objects(image):
     final_image.save(buffered, format="JPEG")
     base64_image = base64.b64encode(buffered.getvalue()).decode("utf-8")
     return base64_image
+
 @app.websocket("/ws/{host}/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, host: str, client_id: str):
     print('서버 호출')
@@ -103,6 +114,7 @@ async def websocket_endpoint(websocket: WebSocket, host: str, client_id: str):
         if client_id == room:
             await manager.close_room(room)
             del connections[room]
+            
 @app.get("/connections")
 def get_connections():
     return {
@@ -214,6 +226,7 @@ async def upload_image(data: ImageData, host: str, client_id: str):
         await manager.broadcast(message, host)
     except Exception as e:
         print(f"Error handling image upload: {e}")
+
 @app.post("/stream/blur/{host}/{client_id}")
 async def upload_image(data: ImageData, host: str, client_id: str):
     try:
@@ -223,6 +236,7 @@ async def upload_image(data: ImageData, host: str, client_id: str):
         await manager.broadcast(message, host)
     except Exception as e:
         print(f"Error handling image upload: {e}")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
