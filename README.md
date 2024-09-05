@@ -1,79 +1,77 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# 🎥 개인정보 보호 실시간 스트리밍 PIP(Privarcy is Power) 🔴
 
-# Getting Started
+![image](https://github.com/user-attachments/assets/e4686053-49e7-450b-a855-793281402e3d)
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
 
-## Step 1: Start the Metro Server
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+<br>
 
-To start Metro, run the following command from the _root_ of your React Native project:
+## 프로젝트 소개
 
-```bash
-# using npm
-npm start
+- OCR 및 컴퓨터 비전 프로젝트
+- 타인의 개인정보 보호를 위한 실시간 스트리밍 플랫폼
+- 실시간 라이브 스트리밍
+- 소통을 더욱 자연스럽고 편리하게 하기 위해 채팅 구현
+- 타인의 얼굴이 공개되지 않게 블러처리 기능
 
-# OR using Yarn
-yarn start
-```
+<br>
 
-## Step 2: Start your Application
+## 1. 활용 라이브러리
 
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
+- React-native
+- Socket
+- ViewShot
 
-### For Android
+<br>
 
-```bash
-# using npm
-npm run android
+## 2. 개발 기간 및 작업 관리
 
-# OR using Yarn
-yarn android
-```
+### 개발 기간
 
-### For iOS
+- 전체 개발 기간 : 2024-08-05 ~ 2024-09-04
+- UI 구현 : 2024-08-05 ~ 2024-08-15
+- 기능 구현 : 2024-08-14 ~ 2024-08-31
+- 테스트 및 수정 : 2024-08-31 ~ 2024-09-03
 
-```bash
-# using npm
-npm run ios
+<br>
 
-# OR using Yarn
-yarn ios
-```
+## 3. 시작 화면
+<div align="center">
+<img src="https://github.com/user-attachments/assets/8ea72662-08d1-4805-b71f-ec13467e3e73" width="200" height="400" />
+</div>
 
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
 
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
+## 4. 메인 화면
+<div align="center">
+<img src="https://github.com/user-attachments/assets/58103a61-766a-409e-96b3-4192da7a6c73" width="200" height="400" />
+</div>
 
-## Step 3: Modifying your App
 
-Now that you have successfully run the app, let's modify it.
+## 5. 라이브 화면
+<div align="center">
+<img src="https://github.com/user-attachments/assets/5f2c6270-d0a6-4847-a0b7-f0c94e7bd1c9" width="200" height="400" />
+</div>
 
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
 
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
+<br>
 
-## Congratulations! :tada:
+## 6. 트러블 슈팅(Trouble Shooting)
 
-You've successfully run and modified your React Native App. :partying_face:
+### 이슈:
+- 호스트와 게스트 사이의 쌍방향 소통을 위해 WebSocket을 사용하여 구현할 때 이미지 데이터와 채팅 데이터가 구분되지 않는 문제점이 있었습니다.
+  
+### 해결방안:
+- 각자의 타입을 image와 text로 정의해주면서 해결할 수 있었습니다.
 
-### Now what?
+<br>
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
+## 7. 실제 화면
 
-# Troubleshooting
+<div align="center">
+  
+### 메인화면
+  
+영상 업로드 준비중...
+</div>
 
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+<br>
