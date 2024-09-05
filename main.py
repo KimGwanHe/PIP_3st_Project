@@ -124,11 +124,11 @@ def get_connections():
 # ==========================================================
 # 비밀번호 해시와 JWT 토큰 설정
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = "abcd1234"
+SECRET_KEY = "gg"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 # MongoDB 설정
-client = MongoClient("mongodb+srv://leesarah721:rXYZRi8SDYz7skmH@cluster0.s6fyzfr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+client = MongoClient("몽고디비URL")
 db = client["3rd-project"]
 collection: Collection = db["user"]
 # Pydantic 모델
