@@ -19,6 +19,7 @@
 ## 1. 활용 라이브러리
 
 - React-native
+- FastAPI
 - Socket
 - ViewShot
 
