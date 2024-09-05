@@ -68,10 +68,14 @@
 ## 7. 실제 화면
 
 <div align="center">
-  
-### 메인화면
-  
-영상 업로드 준비중...
+<img src="https://github.com/user-attachments/assets/ea65a8a7-1be3-4093-a49e-200c43c369c7" width="200" height="400" />
+
+<img src="https://github.com/user-attachments/assets/87c32d83-4b35-4f6d-b698-767ecee58010" width="200" height="400" />
+<br>
+왼쪽 화면: 채팅 구현
+<br>
+오른쪽 화면: 라이브 방송 및 블러처리 기능 적용
+
 </div>
 
 <br>
